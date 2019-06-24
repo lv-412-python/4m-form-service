@@ -1,8 +1,12 @@
 """Init users service"""
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from form_service.config import Configuration
+from flask_restful import Api
+from flask_marshmallow import Marshmallow
 
 APP = Flask(__name__)
-APP.config.from_object(Configuration)
-DB = SQLAlchemy(APP)
+
+API = Api(APP)
+
+MA = Marshmallow(APP)
+
+from form_service.views import view_form  # pylint: disable=wrong-import-position
