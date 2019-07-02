@@ -6,6 +6,7 @@ attrs==19.1.0
 Babel==2.7.0
 blinker==1.4
 Click==7.0
+coverage==4.5.3
 Flask==1.0.3
 Flask-BabelEx==0.9.3
 Flask-Login==0.4.1
@@ -40,6 +41,7 @@ pylint-plugin-utils==0.5
 pylint-sqlalchemy==0.2.0
 pyparsing==2.4.0
 pytest==5.0.0
+pytest-cov==2.7.1
 pytest-flask-sqlalchemy==1.0.2
 pytest-mock==1.10.4
 python-dateutil==2.8.0

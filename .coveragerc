@@ -1,0 +1,15 @@
+[run]
+branch = True
+omit =
+    *./venv*
+    *.pyenv*
+    *migrations/*
+    *setup.py*
+
+
+[report]
+show_missing = True
+precision = 2
+
+[paths]
+source = /home/olyapubuntu/Desktop/project/4m-form-service/form_service
