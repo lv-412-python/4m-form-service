@@ -65,6 +65,12 @@ class AllFormsTest(TestCase):
             }]
             self.assertEqual(response.json, check)
 
+    def test_get_no_owner(self):
+        """Tests get resource."""
+        with self.create_app().test_client() as client:
+            response = client.get('/forms/123464367')
+            self.assertEqual(response.json, {'message': 'Forms by this user could not be found.'})
+
 
 class SingleFormTest(TestCase):
     """Tests for get, put, delete resources."""
@@ -94,13 +100,19 @@ class SingleFormTest(TestCase):
         """Tests get resource."""
         with self.create_app().test_client() as client:
             response = client.get('/form/{}'.format(self.forms_id))
-            check = {
+            check = [{
                 "title": "Test",
                 "description": "testing.",
                 "owner": 2,
                 "form_id": self.forms_id
-            }
+            }]
             self.assertEqual(response.json, check)
+
+    def test_get_no_form(self):
+        """Tests get resource."""
+        with self.create_app().test_client() as client:
+            response = client.get('/form/17457930')
+            self.assertEqual(response.json, {'message': 'Form with this id could not be found.'})
 
     def test_put(self):
         """Tests put resource."""
@@ -121,6 +133,12 @@ class SingleFormTest(TestCase):
             form = Form.query.filter_by(form_id=self.forms_id).first()
             self.assertEqual(form, None)
             self.assertEqual(response.status_code, 200)
+
+    def test_delete_no_id(self):
+        """Tests delete resource."""
+        with self.create_app().test_client() as client:
+            response = client.delete('/form/167057395')
+            self.assertEqual(response.status_code, 400)
 
 
 class PostTest(TestCase):
