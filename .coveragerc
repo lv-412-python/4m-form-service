@@ -1,10 +1,13 @@
 [run]
 branch = True
+include = form_service/*
 omit =
     *./venv*
     *.pyenv*
     *migrations/*
     *setup.py*
+    *__init__.py*
+    *tests/*
 
 
 [report]
