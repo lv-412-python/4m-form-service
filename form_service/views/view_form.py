@@ -1,6 +1,7 @@
 """Form view implementation."""  # pylint: disable=cyclic-import
 from flask_restful import Resource
 from flask import request, Response
+from sqlalchemy.exc import DataError
 from form_service import API
 from form_service.db import DB
 from form_service.models.form import Form
@@ -9,53 +10,65 @@ from form_service.serializers.form_schema import FORM_SCHEMA, FORMS_SCHEMA
 
 class OwnerForm(Resource):
     """Class OwnerForm view implementation."""
-    def get(self, form_id):  # pylint: disable=no-self-use
-        """Get method for one form by one owner."""
-        if form_id.isnumeric():
-            form = Form.query.filter_by(form_id=form_id)
-            output = FORMS_SCHEMA.dump(form).data
-            if not output:
-                output = {'message': 'Form with this id could not be found.'}, 400
-        return output
 
     def put(self, form_id):  # pylint: disable=no-self-use
         """Put method for one form by one owner."""
-        updated_form = Form.query.get(form_id)
+        try:
+            updated_form = Form.query.get(form_id)
+        except DataError:
+            return {'message': 'Invalid url.'}, 400
+        if not updated_form:
+            return {'message': 'Form with this id could not be found.'}, 400
 
-        title = request.json['title']
-        description = request.json['description']
-        owner = request.json['owner']
-
-        updated_form.title = title
-        updated_form.description = description
-        updated_form.owner = owner
+        updated_form.title = request.json['title']
+        updated_form.description = request.json['description']
+        updated_form.owner = request.json['owner']
 
         DB.session.commit()
-
-        return FORM_SCHEMA.jsonify(updated_form)
+        output = FORM_SCHEMA.jsonify(updated_form)
+        return output
 
     def delete(self, form_id):  # pylint: disable=no-self-use
         """Delete method for one form by one user."""
-        if form_id.isnumeric():
+        try:
             form_to_delete = Form.query.get(form_id)
-            if not form_to_delete:
-                return {"message": "Form does not exist."}, 400
+        except DataError:
+            return {"message": "Form does not exist."}, 400
 
         DB.session.delete(form_to_delete)
         DB.session.commit()
         return Response(status=200)
+
+    def get(self, form_id):  # pylint: disable=no-self-use
+        """Get method for one form by one owner."""
+        try:
+            form = Form.query.get(form_id)
+        except DataError:
+            return {'message': 'Invalid url.'}, 400
+        if not form:
+            return {'message': 'Form with this id could not be found.'}, 400
+        form = FORM_SCHEMA.dump(form).data
+        return form, 200
 
 
 class EveryForm(Resource):
     """Class EveryForm view implementation."""
     def get(self, owner):  # pylint: disable=no-self-use
         """Get method for all form by one owner."""
-        if owner.isnumeric():
-            all_forms = Form.query.filter_by(owner=owner)
-            output = FORMS_SCHEMA.dump(all_forms).data
-            if not output:
-                output = {'message': 'Forms by this user could not be found.'}, 400
-        return output
+        try:
+            if owner.isnumeric():
+                all_forms = Form.query.filter_by(owner=owner)
+            else:
+                return {'message': 'Invalid url.'}, 400
+        except DataError:
+            return {'message': 'Invalid url.'}, 400
+        for form in all_forms:
+            form.fields = list(map(int, form.fields.split(',')))
+        all_forms = FORMS_SCHEMA.dump(all_forms).data
+        if not all_forms:
+            return {'message': 'Forms by this user could not be found.'}, 400
+
+        return all_forms
 
 
 class NewForm(Resource):
@@ -65,14 +78,22 @@ class NewForm(Resource):
         title = request.json['title']
         description = request.json['description']
         owner = request.json['owner']
+        fields = request.json['fields']
 
-        exists = bool(
-            Form.query.filter_by(title=title, description=description, owner=owner).first())
+        fields = ",".join(map(str, fields))
+
+        try:
+            exists = bool(
+                Form.query.filter_by(title=title, description=description, owner=owner,
+                                     fields=fields).first())
+        except DataError:
+            return {'message': 'Invalid data.'}, 400
 
         if exists:
-            message = {'error': 'this form already exists.'}, 400
+            message = {'error': 'This form already exists.'}, 400
         else:
-            new_form = Form(title=title, description=description, owner=owner, form_id=1)
+            new_form = Form(title=title, description=description, owner=owner,
+                            fields=fields)
 
             DB.session.add(new_form)
             DB.session.commit()
