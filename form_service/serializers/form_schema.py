@@ -6,7 +6,7 @@ class FormSchema(MA.Schema):  # pylint: disable=too-few-public-methods
     """Implementation of Form schema."""
     class Meta:  # pylint: disable=too-few-public-methods
         """Implementation of Meta class with fields, we want to show."""
-        fields = ('form_id', 'title', 'description', 'owner')
+        fields = ('form_id', 'title', 'description', 'owner', 'fields')
 
 
 FORM_SCHEMA = FormSchema(strict=True)

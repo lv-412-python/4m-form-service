@@ -9,3 +9,4 @@ class Form(DB.Model):  # pylint: disable=too-few-public-methods
     title = Column(String(100), nullable=False)
     description = Column(Text, nullable=False)
     owner = Column(Integer())
+    fields = Column(String(100))
