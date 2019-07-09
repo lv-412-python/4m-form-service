@@ -1,12 +1,14 @@
 """Tests for form service."""
 from unittest import main
 from unittest.mock import patch
+
 from flask_testing import TestCase
 from sqlalchemy.exc import DataError
+
 from form_service import APP
+from form_service.config.test_config import TestConfiguration
 from form_service.db import DB
 from form_service.models.form import Form
-from form_service.config.test_config import TestConfiguration
 
 
 def create_app(config_obj):
@@ -22,6 +24,7 @@ def create_app(config_obj):
 
 class AllFormsTest(TestCase):
     """Tests for get resource."""
+
     def create_app(self):
         """
         Creates Flask app with Test Configuration.
@@ -84,6 +87,7 @@ class AllFormsTest(TestCase):
 
 class SingleFormTest(TestCase):
     """Tests for get, put, delete resources."""
+
     def create_app(self):
         """
         Creates Flask app with Test Configuration.
@@ -164,6 +168,7 @@ class SingleFormTest(TestCase):
 
 class PostTest(TestCase):
     """Tests for post resource."""
+
     def create_app(self):
         """
         Creates Flask app with Test Configuration.

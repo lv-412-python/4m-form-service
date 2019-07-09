@@ -10,6 +10,7 @@ chardet==3.0.4
 Click==7.0
 coverage==4.5.3
 Flask==1.0.3
+Flask-API==1.1
 Flask-BabelEx==0.9.3
 Flask-Login==0.4.1
 Flask-Mail==0.9.1
@@ -37,7 +38,7 @@ more-itertools==7.0.0
 packaging==19.0
 passlib==1.7.1
 pluggy==0.12.0
-psycopg2==2.8.3
+psycopg2==2.7.7
 py==1.8.0
 pylint==2.3.1
 pylint-flask==0.6

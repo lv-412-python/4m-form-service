@@ -1,11 +1,11 @@
 """Init users service"""
 from flask import Flask
-from flask_restful import Api
 from flask_marshmallow import Marshmallow
+from flask_restful import Api
 
 APP = Flask(__name__)
 
-API = Api(APP)
+API = Api(APP, catch_all_404s=True)
 
 MA = Marshmallow(APP)
 
