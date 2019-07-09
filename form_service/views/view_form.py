@@ -18,30 +18,18 @@ class FormResource(Resource):
         resp = Response()
         if not owner and not form_id:
             all_forms = Form.query.all()
-            if not all_forms:
-                resp = jsonify({"error": "Does not exist."})
-                resp.status_code = status.HTTP_400_BAD_REQUEST
-            else:
-                resp = jsonify(FORMS_SCHEMA.dump(all_forms).data)
-                resp.status_code = status.HTTP_200_OK
+            resp = jsonify(FORMS_SCHEMA.dump(all_forms).data)
+            resp.status_code = status.HTTP_200_OK
 
         elif owner and not form_id:
             owner_forms = Form.query.filter_by(owner=owner).all()
-            if not owner_forms:
-                resp = jsonify({"error": "Does not exist."})
-                resp.status_code = status.HTTP_400_BAD_REQUEST
-            else:
-                resp = jsonify(FORMS_SCHEMA.dump(owner_forms).data)
-                resp.status_code = status.HTTP_200_OK
+            resp = jsonify(FORMS_SCHEMA.dump(owner_forms).data)
+            resp.status_code = status.HTTP_200_OK
 
         else:
             form = Form.query.get(form_id)
-            if not form:
-                resp = jsonify({"error": "Does not exist."})
-                resp.status_code = status.HTTP_400_BAD_REQUEST
-            else:
-                resp = jsonify(FORM_SCHEMA.dump(form).data)
-                resp.status_code = status.HTTP_200_OK
+            resp = jsonify(FORM_SCHEMA.dump(form).data)
+            resp.status_code = status.HTTP_200_OK
         return resp
 
     def delete(self, form_id):
