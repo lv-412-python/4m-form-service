@@ -1,106 +1,109 @@
 """Form view implementation."""  # pylint: disable=cyclic-import
+from flask import request, Response, jsonify
+from flask_api import status
 from flask_restful import Resource
-from flask import request, Response
-from sqlalchemy.exc import DataError
+from marshmallow import ValidationError
+from sqlalchemy.exc import DataError, IntegrityError
+
 from form_service import API
 from form_service.db import DB
 from form_service.models.form import Form
 from form_service.serializers.form_schema import FORM_SCHEMA, FORMS_SCHEMA
 
 
-class OwnerForm(Resource):
-    """Class OwnerForm view implementation."""
+class FormResource(Resource):
+    """Class FormView implementation."""
+    def get(self, form_id=None, owner=None):
+        """Get method."""
+        resp = Response()
+        if not owner and not form_id:
+            all_forms = Form.query.all()
+            if not all_forms:
+                resp = jsonify({"error": "Does not exist."})
+                resp.status_code = status.HTTP_400_BAD_REQUEST
+            else:
+                resp = jsonify(FORMS_SCHEMA.dump(all_forms).data)
+                resp.status_code = status.HTTP_200_OK
 
-    def put(self, form_id):  # pylint: disable=no-self-use
-        """Put method for one form by one owner."""
-        try:
-            updated_form = Form.query.get(form_id)
-        except DataError:
-            return {'message': 'Invalid url.'}, 400
-        if not updated_form:
-            return {'message': 'Form with this id could not be found.'}, 400
+        elif owner and not form_id:
+            owner_forms = Form.query.filter_by(owner=owner).all()
+            if not owner_forms:
+                resp = jsonify({"error": "Does not exist."})
+                resp.status_code = status.HTTP_400_BAD_REQUEST
+            else:
+                resp = jsonify(FORMS_SCHEMA.dump(owner_forms).data)
+                resp.status_code = status.HTTP_200_OK
 
-        updated_form.title = request.json['title']
-        updated_form.description = request.json['description']
-        updated_form.owner = request.json['owner']
+        else:
+            form = Form.query.get(form_id)
+            if not form:
+                resp = jsonify({"error": "Does not exist."})
+                resp.status_code = status.HTTP_400_BAD_REQUEST
+            else:
+                resp = jsonify(FORM_SCHEMA.dump(form).data)
+                resp.status_code = status.HTTP_200_OK
+        return resp
 
-        DB.session.commit()
-        output = FORM_SCHEMA.jsonify(updated_form)
-        return output
-
-    def delete(self, form_id):  # pylint: disable=no-self-use
+    def delete(self, form_id):
         """Delete method for one form by one user."""
         try:
             form_to_delete = Form.query.get(form_id)
         except DataError:
-            return {"message": "Form does not exist."}, 400
+            return {'error': 'Invalid url.'}, status.HTTP_404_NOT_FOUND
+        if not form_to_delete:
+            return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
 
         DB.session.delete(form_to_delete)
         DB.session.commit()
-        return Response(status=200)
+        return Response(status=status.HTTP_200_OK)
 
-    def get(self, form_id):  # pylint: disable=no-self-use
-        """Get method for one form by one owner."""
+    def put(self, form_id):
+        """Put method for one form by one owner."""
         try:
-            form = Form.query.get(form_id)
+            updated_form = Form.query.get(form_id)
         except DataError:
-            return {'message': 'Invalid url.'}, 400
-        if not form:
-            return {'message': 'Form with this id could not be found.'}, 400
-        form = FORM_SCHEMA.dump(form).data
-        return form, 200
-
-
-class EveryForm(Resource):
-    """Class EveryForm view implementation."""
-    def get(self, owner):  # pylint: disable=no-self-use
-        """Get method for all form by one owner."""
+            return {'error': 'Invalid url.'}, status.HTTP_404_NOT_FOUND
+        if not updated_form:
+            return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
         try:
-            if owner.isnumeric():
-                all_forms = Form.query.filter_by(owner=owner)
-            else:
-                return {'message': 'Invalid url.'}, 400
-        except DataError:
-            return {'message': 'Invalid url.'}, 400
-        for form in all_forms:
-            form.fields = list(map(int, form.fields.split(',')))
-        all_forms = FORMS_SCHEMA.dump(all_forms).data
-        if not all_forms:
-            return {'message': 'Forms by this user could not be found.'}, 400
+            updated_data = request.get_json()
+        except ValidationError as err:
+            return err.messages, status.HTTP_400_BAD_REQUEST
 
-        return all_forms
-
-
-class NewForm(Resource):
-    """Class NewForm implementation."""
-    def post(self):  # pylint: disable=no-self-use
-        """Post method for Form."""
-        title = request.json['title']
-        description = request.json['description']
-        owner = request.json['owner']
-        fields = request.json['fields']
-
-        fields = ",".join(map(str, fields))
-
+        for data in updated_data:
+            updated_form.title = data['title']
+            updated_form.description = data['description']
+            updated_form.owner = data['owner']
+            updated_form.fields = data['fields']
         try:
-            exists = bool(
-                Form.query.filter_by(title=title, description=description, owner=owner,
-                                     fields=fields).first())
-        except DataError:
-            return {'message': 'Invalid data.'}, 400
-
-        if exists:
-            message = {'error': 'This form already exists.'}, 400
-        else:
-            new_form = Form(title=title, description=description, owner=owner,
-                            fields=fields)
-
-            DB.session.add(new_form)
             DB.session.commit()
+        except IntegrityError:
+            return {'error': 'Already exists.'}, status.HTTP_400_BAD_REQUEST
+        output = FORM_SCHEMA.jsonify(updated_form)
+        return output
 
-        return message if exists else FORM_SCHEMA.jsonify(new_form)
+    def post(self):
+        """Post method for Form."""
+        try:
+            new_form = FORM_SCHEMA.load(request.json).data
+        except ValidationError as err:
+            return err.messages, status.HTTP_400_BAD_REQUEST
+
+        add_new_form = Form(
+            title=new_form['title'],
+            description=new_form['description'],
+            owner=new_form['owner'],
+            fields=new_form['fields']
+        )
+
+        DB.session.add(add_new_form)
+
+        try:
+            DB.session.commit()
+        except IntegrityError:
+            DB.session.rollback()
+            return {'error': 'Already exists.'}, status.HTTP_400_BAD_REQUEST
+        return Response(status=status.HTTP_201_CREATED)
 
 
-API.add_resource(OwnerForm, '/form/<form_id>')
-API.add_resource(EveryForm, '/forms/<owner>')
-API.add_resource(NewForm, '/form/new')
+API.add_resource(FormResource, '/owner/<owner>', '/form/<form_id>', '/form')
