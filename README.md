@@ -1,4 +1,4 @@
-# 4m-form-service  [![Build Status](https://travis-ci.org/lv-412-python/4m-form-service.svg?branch=develop)](https://travis-ci.org/lv-412-python/4m-form-service)
+# 4m-form-service  [![Build Status](https://travis-ci.org/lv-412-python/form-service-repo.svg?branch=develop)](https://travis-ci.org/lv-412-python/form-service-repo)
 
 ## Description
 This is the source code of the Form service which allows you create surveys with some title and some amount of different fields to fill. This app provides flexible and easy to use form-constructor.
@@ -44,7 +44,7 @@ Now fill your database with some data:
 ## Run Project
 ### In the project root create venv and install requirements with Make
 ```
-export PYTHONPATH=$PYTHONPATH:/home/.../.../4m-form-service/form_service
+export PYTHONPATH=$PYTHONPATH:/home/.../.../form-service-repo/form_service
 ```
 ### Flask
 Go to the folder with setup.py file, run the server by command:
