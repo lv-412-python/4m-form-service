@@ -32,12 +32,12 @@ class FormResource(Resource):
 
         return resp if result else ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
 
-    def delete(self, form_id):
+    def delete(self):
         """
         Delete method for the form.
-        :param form_id: int: id of the form.
         :return: Response object or error message with status code.
         """
+        form_id = request.args.get('form_id')
         try:
             form_to_delete = Form.query.get(form_id)
         except DataError as err:
@@ -51,12 +51,12 @@ class FormResource(Resource):
         DB.session.commit()
         return Response(status=status.HTTP_200_OK)
 
-    def put(self, form_id):
+    def put(self):
         """
         Put method for the form.
-        :param form_id: int: id of the form.
         :return: Response object or error message with status code.
         """
+        form_id = request.args.get('form_id')
         updated_form = Form.query.get(form_id)
         if not updated_form:
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
