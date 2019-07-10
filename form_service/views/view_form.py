@@ -6,6 +6,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import DataError, IntegrityError
 
 from form_service import API
+from form_service import APP
 from form_service.db import DB
 from form_service.models.form import Form
 from form_service.serializers.form_schema import FORM_SCHEMA, FORMS_SCHEMA
@@ -39,9 +40,11 @@ class FormResource(Resource):
         """
         try:
             form_to_delete = Form.query.get(form_id)
-        except DataError:
+        except DataError as err:
+            APP.logger.error(err.args)
             return {'error': 'Invalid url.'}, status.HTTP_404_NOT_FOUND
         if not form_to_delete:
+            APP.logger.error('Form with id {} does not exist.'.format(form_id))
             return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
 
         DB.session.delete(form_to_delete)
@@ -60,13 +63,15 @@ class FormResource(Resource):
         try:
             updated_data = FORM_SCHEMA.load(request.json).data
         except ValidationError as err:
+            APP.logger.error(err.args)
             return err.messages, status.HTTP_400_BAD_REQUEST
 
         for key, value in updated_data.items():
             setattr(updated_form, key, value)
         try:
             DB.session.commit()
-        except IntegrityError:
+        except IntegrityError as err:
+            APP.logger.error(err.args)
             return {'error': 'Already exists.'}, status.HTTP_400_BAD_REQUEST
         return Response(status=status.HTTP_200_OK)
 
@@ -78,6 +83,7 @@ class FormResource(Resource):
         try:
             new_form = FORM_SCHEMA.load(request.json).data
         except ValidationError as err:
+            APP.logger.error(err.args)
             return err.messages, status.HTTP_400_BAD_REQUEST
 
         add_new_form = Form(**new_form)
@@ -86,7 +92,8 @@ class FormResource(Resource):
 
         try:
             DB.session.commit()
-        except IntegrityError:
+        except IntegrityError as err:
+            APP.logger.error(err.args)
             DB.session.rollback()
             return {'error': 'Already exists.'}, status.HTTP_400_BAD_REQUEST
         return Response(status=status.HTTP_201_CREATED)
