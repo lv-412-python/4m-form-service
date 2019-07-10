@@ -15,7 +15,6 @@ class FormSchema(MA.Schema):
     @post_load
     def convert_list_from_str(self, data):
         """Converts into list from string."""
-        # print(data['fields'])
         data['fields'] = ",".join(map(str, data['fields']))
         return data
 
