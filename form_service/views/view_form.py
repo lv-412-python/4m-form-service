@@ -14,30 +14,30 @@ from form_service.serializers.form_schema import FORM_SCHEMA, FORMS_SCHEMA
 
 class FormResource(Resource):
     """Class FormView implementation."""
-    def get(self, form_id=None, owner=None):
-        """Get method."""
+    def get(self):
+        """
+        Get method for Form Service.
+        :return: requested forms with status code or error message with status code.
+        """
         resp = Response()
-        if not owner and not form_id:
-            all_forms = Form.query.all()
-            message = FORMS_SCHEMA.dump(all_forms).data
-            resp = jsonify(message)
-            resp.status_code = status.HTTP_200_OK
+        ids = request.args.to_dict()
+        output = Form.query.filter()
+        if 'form_id' in ids:
+            output = output.filter(Form.form_id.in_(list(ids['form_id'])))
+        if 'owner' in ids:
+            output = output.filter(Form.owner.in_(list(ids['owner'])))
+        result = FORMS_SCHEMA.dump(output).data
+        resp = jsonify(result)
+        resp.status_code = status.HTTP_200_OK
 
-        elif owner and not form_id:
-            owner_forms = Form.query.filter_by(owner=owner).all()
-            message = FORMS_SCHEMA.dump(owner_forms).data
-            resp = jsonify(message)
-            resp.status_code = status.HTTP_200_OK
-
-        else:
-            form = Form.query.get(form_id)
-            message = FORM_SCHEMA.dump(form).data
-            resp = jsonify(message)
-            resp.status_code = status.HTTP_200_OK
-        return resp
+        return resp if result else ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
 
     def delete(self, form_id):
-        """Delete method for one form by one user."""
+        """
+        Delete method for the form.
+        :param form_id: int: id of the form.
+        :return: Response object or error message with status code.
+        """
         try:
             form_to_delete = Form.query.get(form_id)
         except DataError as err:
@@ -52,7 +52,11 @@ class FormResource(Resource):
         return Response(status=status.HTTP_200_OK)
 
     def put(self, form_id):
-        """Put method for one form by one owner."""
+        """
+        Put method for the form.
+        :param form_id: int: id of the form.
+        :return: Response object or error message with status code.
+        """
         updated_form = Form.query.get(form_id)
         if not updated_form:
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
@@ -72,7 +76,10 @@ class FormResource(Resource):
         return Response(status=status.HTTP_200_OK)
 
     def post(self):
-        """Post method for Form."""
+        """
+        Post method for creating a new form.
+        :return: Response object or error message with status code.
+        """
         try:
             new_form = FORM_SCHEMA.load(request.json).data
         except ValidationError as err:
@@ -92,4 +99,4 @@ class FormResource(Resource):
         return Response(status=status.HTTP_201_CREATED)
 
 
-API.add_resource(FormResource, '/form/<form_id>')
+API.add_resource(FormResource, '/form')
