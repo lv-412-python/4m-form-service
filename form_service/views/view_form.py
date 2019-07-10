@@ -59,22 +59,16 @@ class FormResource(Resource):
 
     def put(self, form_id):
         """Put method for one form by one owner."""
-        try:
-            updated_form = Form.query.get(form_id)
-        except DataError:
-            return {'error': 'Invalid url.'}, status.HTTP_404_NOT_FOUND
+        updated_form = Form.query.get(form_id)
         if not updated_form:
             return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
         try:
-            updated_data = request.get_json()
+            updated_data = FORM_SCHEMA.load(request.json).data
         except ValidationError as err:
             return err.messages, status.HTTP_400_BAD_REQUEST
 
-        for data in updated_data:
-            updated_form.title = data['title']
-            updated_form.description = data['description']
-            updated_form.owner = data['owner']
-            updated_form.fields = data['fields']
+        for key, value in updated_data.items():
+            setattr(updated_form, key, value)
         try:
             DB.session.commit()
         except IntegrityError:
@@ -89,12 +83,7 @@ class FormResource(Resource):
         except ValidationError as err:
             return err.messages, status.HTTP_400_BAD_REQUEST
 
-        add_new_form = Form(
-            title=new_form['title'],
-            description=new_form['description'],
-            owner=new_form['owner'],
-            fields=new_form['fields']
-        )
+        add_new_form = Form(**new_form)
 
         DB.session.add(add_new_form)
 
@@ -106,4 +95,4 @@ class FormResource(Resource):
         return Response(status=status.HTTP_201_CREATED)
 
 
-API.add_resource(FormResource, '/owner/<owner>', '/form/<form_id>', '/form')
+API.add_resource(FormResource, '/form/<form_id>')
