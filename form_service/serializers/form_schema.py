@@ -22,7 +22,8 @@ class FormSchema(MA.Schema):
     @pre_dump
     def convert_str_from_list(self, data):
         """Converts into string from list."""
-        data.fields = list(map(int, data.fields.split(',')))
+        if data:
+            data.fields = list(map(int, data.fields.split(',')))
         return data
 
 

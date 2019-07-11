@@ -21,7 +21,11 @@ class FormResource(Resource):
         :return: requested forms with status code or error message with status code.
         """
         if form_id:
-            output = Form.query.get(form_id)
+            try:
+                output = Form.query.get(form_id)
+            except DataError as err:
+                APP.logger.error(err.args)
+                return {'error': 'Invalid URL.'}, status.HTTP_404_NOT_FOUND
             result = FORM_SCHEMA.dump(output).data
         else:
             ids = {
@@ -50,7 +54,7 @@ class FormResource(Resource):
             form_to_delete = Form.query.get(form_id)
         except DataError as err:
             APP.logger.error(err.args)
-            return {'error': 'Invalid url.'}, status.HTTP_404_NOT_FOUND
+            return {'error': 'Invalid URL.'}, status.HTTP_404_NOT_FOUND
         if not form_to_delete:
             APP.logger.error('Form with id {} does not exist.'.format(form_id))
             return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
@@ -64,7 +68,11 @@ class FormResource(Resource):
         Put method for the form.
         :return: Response object or error message with status code.
         """
-        updated_form = Form.query.get(form_id)
+        try:
+            updated_form = Form.query.get(form_id)
+        except DataError as err:
+            APP.logger.error(err.args)
+            return {'error': 'Invalid URL.'}, status.HTTP_404_NOT_FOUND
         if not updated_form:
             return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
         try:
@@ -75,11 +83,7 @@ class FormResource(Resource):
 
         for key, value in updated_data.items():
             setattr(updated_form, key, value)
-        try:
-            DB.session.commit()
-        except IntegrityError as err:
-            APP.logger.error(err.args)
-            return {'error': 'Already exists.'}, status.HTTP_400_BAD_REQUEST
+        DB.session.commit()
         return Response(status=status.HTTP_200_OK)
 
     def post(self):

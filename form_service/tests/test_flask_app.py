@@ -3,6 +3,7 @@ from unittest import main
 from unittest.mock import patch
 
 from flask_testing import TestCase
+from marshmallow import ValidationError
 from sqlalchemy.exc import DataError
 
 from form_service import APP
@@ -22,8 +23,8 @@ def create_app(config_obj):
     return app
 
 
-class AllFormsTest(TestCase):
-    """Tests for get resource."""
+class GetPutDeleteTest(TestCase):
+    """Tests for get, put and delete resources with the same set-up."""
 
     def create_app(self):
         """
@@ -35,17 +36,18 @@ class AllFormsTest(TestCase):
     def setUp(self):
         """Creates tables and puts objects into database."""
         DB.create_all()
-        form1 = Form(title="Test", description="testing.", owner=2, fields=14896)
-        form2 = Form(title="Another test", description="new one", owner=2, fields="47891")
+        form1 = Form(title="Test", description="testing.", owner=2, fields="1, 4, 8, 9, 6")
+        form2 = Form(title="Another test", description="new one", owner=3, fields="4, 7, 8, 9, 1")
         DB.session.add(form1)
         DB.session.add(form2)
         DB.session.commit()
         id1 = Form.query.filter_by(title="Test", description="testing.",
-                                   owner=2, fields="14896").first()
-        self.owner_id = id1.owner
+                                   owner=2, fields="1, 4, 8, 9, 6").first()
+        self.owner_id_1 = id1.owner
         self.forms_id_1 = id1.form_id
         id2 = Form.query.filter_by(title="Another test", description="new one",
-                                   owner=2, fields="47891").first()
+                                   owner=3, fields="4, 7, 8, 9, 1").first()
+        self.owner_id_2 = id2.owner
         self.forms_id_2 = id2.form_id
 
     def tearDown(self):
@@ -53,81 +55,49 @@ class AllFormsTest(TestCase):
         DB.session.remove()
         DB.drop_all()
 
-    def test_get(self):
-        """Tests get resource."""
+    def test_get_all_forms(self):
+        """Tests get method to get all forms."""
         with self.create_app().test_client() as client:
-            response = client.get('/forms/{}'.format(self.owner_id))
+            response = client.get('/form')
             check = [{
                 "title": "Test",
                 "description": "testing.",
-                "owner": self.owner_id,
+                "owner": self.owner_id_1,
                 "form_id": self.forms_id_1,
-                "fields": [14896]
+                "fields": [1, 4, 8, 9, 6]
             }, {
                 "title": "Another test",
                 "description": "new one",
-                "owner": self.owner_id,
+                "owner": self.owner_id_2,
                 "form_id": self.forms_id_2,
-                "fields": [47891]
+                "fields": [4, 7, 8, 9, 1]
             }]
             self.assertEqual(response.json, check)
 
-    def test_get_no_owner(self):
-        """Tests get resource."""
+    def test_get_one_form(self):
+        """Tests get method to get one particular form."""
         with self.create_app().test_client() as client:
-            response = client.get('/forms/123464367')
-            self.assertEqual(response.json, {'message': 'Forms by this user could not be found.'})
-
-    def test_get_invalid_url(self):
-        """Tests get resource."""
-        with self.create_app().test_client() as client:
-            response = client.get('/forms/123gh464367')
-            self.assertEqual(response.json, {'message': 'Invalid url.'})
-
-
-class SingleFormTest(TestCase):
-    """Tests for get, put, delete resources."""
-
-    def create_app(self):
-        """
-        Creates Flask app with Test Configuration.
-        :return: flask app.
-        """
-        return create_app(TestConfiguration)
-
-    def setUp(self):
-        """Creates tables and puts objects into database."""
-        DB.create_all()
-        form = Form(title="Test", description="testing.", owner=2, fields=14896)
-        DB.session.add(form)
-        DB.session.commit()
-        form = Form.query.filter_by(title="Test", description="testing.",
-                                    owner=2, fields="14896").first()
-        self.forms_id = form.form_id
-
-    def tearDown(self):
-        """Drops all tables."""
-        DB.session.remove()
-        DB.drop_all()
-
-    def test_get(self):
-        """Tests get resource."""
-        with self.create_app().test_client() as client:
-            response = client.get('/form/{}'.format(self.forms_id))
+            response = client.get('/form/{}'.format(self.forms_id_1))
             check = {
                 "title": "Test",
                 "description": "testing.",
                 "owner": 2,
-                "form_id": self.forms_id,
-                "fields": "14896"
+                "form_id": self.forms_id_1,
+                "fields": [1, 4, 8, 9, 6]
             }
             self.assertEqual(response.json, check)
 
-    def test_get_no_form(self):
-        """Tests get resource."""
+    def test_get_no_data(self):
+        """Tests get method with id that does not exist."""
         with self.create_app().test_client() as client:
-            response = client.get('/form/17457930')
-            self.assertEqual(response.json, {'message': 'Form with this id could not be found.'})
+            response = client.get('/form/123464367')
+            self.assertEqual(response.json, {'error': 'Does not exist.'})
+
+    def test_get_invalid_url(self):
+        """Tests get method when invalid url was entered.."""
+        with self.create_app().test_client() as client:
+            response = client.get('/form/ghvgfgvk')
+            self.assertEqual(response.json, {'error': 'Invalid URL.'})
 
     @patch('form_service.models.form.Form.query', **{'get.side_effect': DataError(None,
                                                                                   None, None)})
@@ -135,39 +105,63 @@ class SingleFormTest(TestCase):
         """Tests get resource."""
         with self.create_app().test_client() as client:
             response = client.get('/form/386jf')
-            self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.json["message"], 'Invalid url.')
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(response.json['error'], 'Invalid URL.')
 
     def test_put(self):
-        """Tests put resource."""
+        """Tests put method."""
         with self.create_app().test_client() as client:
             new = {
                 "title": "Test",
                 "description": "testing.",
-                "owner": 2,
-                "fields": [14896]
+                "owner": 5,
+                "fields": [1, 4, 8, 9, 6]
             }
-            client.put('/form/{}'.format(self.forms_id), json=new)
-            form = Form.query.filter_by(form_id=self.forms_id).first()
-            self.assertEqual(form.owner, 2)
+            response = client.put('/form/{}'.format(self.forms_id_1), json=new)
+            self.assertEqual(response.status_code, 200)
 
-    def test_put_no_owner(self):
-        """Tests put resource."""
+    def test_put_no_form(self):
+        """Tests put method."""
         with self.create_app().test_client() as client:
             response = client.put('/form/13575836')
-            self.assertEqual(response.json, {'message': 'Form with this id could not be found.'})
+            self.assertEqual(response.json, {'error': 'Does not exist.'})
+
+    @patch('form_service.models.form.Form.query', **{'get.side_effect': DataError(None,
+                                                                                  None, None)})
+    def test_put_data_error(self, mock_obj):  # pylint: disable=unused-argument
+        """Tests put method for DataError."""
+        with self.create_app().test_client() as client:
+            response = client.put('/form/386jf')
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(response.json['error'], 'Invalid URL.')
 
     def test_delete(self):
-        """Tests delete resource."""
+        """Tests delete method."""
         with self.create_app().test_client() as client:
-            response = client.delete('/form/{}'.format(self.forms_id))
-            form = Form.query.filter_by(form_id=self.forms_id).first()
+            response = client.delete('/form/{}'.format(self.forms_id_1))
+            form = Form.query.filter_by(form_id=self.forms_id_1).first()
             self.assertEqual(form, None)
             self.assertEqual(response.status_code, 200)
 
+    @patch('form_service.models.form.Form.query', **{'get.side_effect': DataError(None,
+                                                                                  None, None)})
+    def test_delete_data_error(self, mock_obj):  # pylint: disable=unused-argument
+        """Tests delete method for DataError."""
+        with self.create_app().test_client() as client:
+            response = client.delete('/form/386jf')
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(response.json['error'], 'Invalid URL.')
+
+    def test_delete_no_data(self):
+        """Tests delete method is the form with that id does not exist"""
+        with self.create_app().test_client() as client:
+            response = client.delete('/form/123')
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json['error'], 'Does not exist.')
+
 
 class PostTest(TestCase):
-    """Tests for post resource."""
+    """Tests for post method."""
 
     def create_app(self):
         """
@@ -183,20 +177,30 @@ class PostTest(TestCase):
     def test_post_success(self):
         """Tests post resource success."""
         with self.create_app().test_client() as client:
-            response = client.post('/form/new',
+            response = client.post('/form',
                                    json={"title": "Test", "description": "testing.",
-                                         "owner": 2, "fields": "14896"})
-            self.assertEqual(response.status_code, 200)
+                                         "owner": 2, "fields": [14896]})
+            self.assertEqual(response.status_code, 201)
 
     def test_post_failure(self):
         """Tests post resource failure."""
         with self.create_app().test_client() as client:
-            client.post('/form/new', json={"title": "Test", "description": "testing.",
-                                           "owner": 2, "fields": "14896"})
-            response = client.post('/form/new',
+            client.post('/form', json={"title": "Test", "description": "testing.",
+                                       "owner": 2, "fields": [14896]})
+            response = client.post('/form',
                                    json={"title": "Test", "description": "testing.",
-                                         "owner": 2, "fields": "14896"})
+                                         "owner": 2, "fields": [14896]})
             self.assertEqual(response.status_code, 400)
+
+    @patch('form_service.models.form.Form.query', **{'get.side_effect': ValidationError(None)})
+    def test_post_validation_error(self, mock_obj):  # pylint: disable=unused-argument
+        """Tests post method for ValidationError."""
+        with self.create_app().test_client() as client:
+            response = client.post('/form',
+                                   json={"title": 1, "description": "testing.",
+                                         "owner": 2, "fields": [14896]})
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json['title'], ['Not a valid string.'])
 
     def tearDown(self):
         """Drops all tables."""
