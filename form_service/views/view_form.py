@@ -1,9 +1,10 @@
 """Form view implementation."""  # pylint: disable=cyclic-import
 from flask import request, Response, jsonify
 from flask_api import status
-from flask_restful import Resource
-from marshmallow import ValidationError
+from flask_restful import Resource, HTTPException
+from marshmallow import ValidationError, fields
 from sqlalchemy.exc import DataError, IntegrityError
+from webargs.flaskparser import parser
 
 from form_service import API
 from form_service import APP
@@ -20,12 +21,20 @@ class FormResource(Resource):
         :return: requested forms with status code or error message with status code.
         """
         resp = Response()
-        ids = request.args.to_dict()
+        ids = {
+            'form_id': fields.List(fields.Int(validate=lambda value: value > 0)),
+            'owner': fields.List(fields.Int(validate=lambda value: value > 0))
+        }
+        try:
+            ids = parser.parse(ids, request)
+        except HTTPException as err:
+            APP.logger.error(err.args)
+            return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
         output = Form.query.filter()
         if 'form_id' in ids:
-            output = output.filter(Form.form_id.in_(list(ids['form_id'])))
+            output = output.filter(Form.form_id.in_(ids['form_id']))
         if 'owner' in ids:
-            output = output.filter(Form.owner.in_(list(ids['owner'])))
+            output = output.filter(Form.owner.in_(ids['owner']))
         result = FORMS_SCHEMA.dump(output).data
         resp = jsonify(result)
         resp.status_code = status.HTTP_200_OK
@@ -59,7 +68,7 @@ class FormResource(Resource):
         form_id = request.args.get('form_id')
         updated_form = Form.query.get(form_id)
         if not updated_form:
-            return {"error": "Does not exist."}, status.HTTP_400_BAD_REQUEST
+            return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
         try:
             updated_data = FORM_SCHEMA.load(request.json).data
         except ValidationError as err:
