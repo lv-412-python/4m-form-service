@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 from flask_testing import TestCase
 from marshmallow import ValidationError
-from sqlalchemy.exc import DataError
 
 from form_service import APP
 from form_service.config.test_config import TestConfiguration
@@ -93,21 +92,6 @@ class GetPutDeleteTest(TestCase):
             response = client.get('/form/123464367')
             self.assertEqual(response.json, {'error': 'Does not exist.'})
 
-    def test_get_invalid_url(self):
-        """Tests get method when invalid url was entered.."""
-        with self.create_app().test_client() as client:
-            response = client.get('/form/ghvgfgvk')
-            self.assertEqual(response.json, {'error': 'Invalid URL.'})
-
-    @patch('form_service.models.form.Form.query', **{'get.side_effect': DataError(None,
-                                                                                  None, None)})
-    def test_get_data_error(self, mock_obj):  # pylint: disable=unused-argument
-        """Tests get resource."""
-        with self.create_app().test_client() as client:
-            response = client.get('/form/386jf')
-            self.assertEqual(response.status_code, 404)
-            self.assertEqual(response.json['error'], 'Invalid URL.')
-
     def test_put(self):
         """Tests put method."""
         with self.create_app().test_client() as client:
@@ -126,15 +110,6 @@ class GetPutDeleteTest(TestCase):
             response = client.put('/form/13575836')
             self.assertEqual(response.json, {'error': 'Does not exist.'})
 
-    @patch('form_service.models.form.Form.query', **{'get.side_effect': DataError(None,
-                                                                                  None, None)})
-    def test_put_data_error(self, mock_obj):  # pylint: disable=unused-argument
-        """Tests put method for DataError."""
-        with self.create_app().test_client() as client:
-            response = client.put('/form/386jf')
-            self.assertEqual(response.status_code, 404)
-            self.assertEqual(response.json['error'], 'Invalid URL.')
-
     def test_delete(self):
         """Tests delete method."""
         with self.create_app().test_client() as client:
@@ -142,15 +117,6 @@ class GetPutDeleteTest(TestCase):
             form = Form.query.filter_by(form_id=self.forms_id_1).first()
             self.assertEqual(form, None)
             self.assertEqual(response.status_code, 200)
-
-    @patch('form_service.models.form.Form.query', **{'get.side_effect': DataError(None,
-                                                                                  None, None)})
-    def test_delete_data_error(self, mock_obj):  # pylint: disable=unused-argument
-        """Tests delete method for DataError."""
-        with self.create_app().test_client() as client:
-            response = client.delete('/form/386jf')
-            self.assertEqual(response.status_code, 404)
-            self.assertEqual(response.json['error'], 'Invalid URL.')
 
     def test_delete_no_data(self):
         """Tests delete method is the form with that id does not exist"""
