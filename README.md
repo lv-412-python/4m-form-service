@@ -7,9 +7,23 @@ This is the source code of the Form service which allows you create surveys with
 * Python (3.6.8)
 * PostgreSQL (11.4)
 * Flask (1.0.3)
+* Docker (18.09.7)
 
 ## Install
 For the next steps of service installation, you will need setup of Ubuntu 18.04 OS
+
+### Install
+For the next steps of service installation, you will need setup of Docker
+
+### In the project root dockerize service:
+
+```
+docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+sudo start.sh
+flask db upgrade
+```
+
+OR
 
 ### Install and configure PostgreSQL server on your local machine:
 ```
@@ -50,11 +64,11 @@ export PYTHONPATH=$PYTHONPATH:/home/.../.../form-service-repo/form_service
 Go to the folder with setup.py file, run the server by command:
 #### To run in development mode:
 ```
-make dev-env
+make run-dev
 ```
 #### To run in production mode:
 ```
-make prod-env
+make run-prod
 ```
 #### In case of failure:
 ```

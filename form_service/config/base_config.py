@@ -4,5 +4,6 @@
 class Configuration:
     """Configuration class."""
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:postgres@localhost:5432/4m_forms'
+    SQLALCHEMY_DATABASE_URI = \
+        'postgres://kkxeulhg:bq35nWtkFTw4Ef04or0u74pspv54ntR2@balarama.db.elephantsql.com:5432/kkxeulhg'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
