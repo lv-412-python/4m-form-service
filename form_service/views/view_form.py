@@ -3,7 +3,7 @@ from flask import request, Response, jsonify
 from flask_api import status
 from flask_restful import Resource, HTTPException
 from marshmallow import ValidationError, fields
-from sqlalchemy.exc import DataError, IntegrityError
+from sqlalchemy.exc import IntegrityError
 from webargs.flaskparser import parser
 
 from form_service import API
@@ -21,11 +21,7 @@ class FormResource(Resource):
         :return: requested forms with status code or error message with status code.
         """
         if form_id:
-            try:
-                output = Form.query.get(form_id)
-            except DataError as err:
-                APP.logger.error(err.args)
-                return {'error': 'Invalid URL.'}, status.HTTP_404_NOT_FOUND
+            output = Form.query.get(form_id)
             result = FORM_SCHEMA.dump(output).data
         else:
             ids = {
@@ -48,11 +44,7 @@ class FormResource(Resource):
         Delete method for the form.
         :return: Response object or error message with status code.
         """
-        try:
-            form_to_delete = Form.query.get(form_id)
-        except DataError as err:
-            APP.logger.error(err.args)
-            return {'error': 'Invalid URL.'}, status.HTTP_404_NOT_FOUND
+        form_to_delete = Form.query.get(form_id)
         if not form_to_delete:
             APP.logger.error('Form with id {} does not exist.'.format(form_id))
             return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
@@ -66,11 +58,7 @@ class FormResource(Resource):
         Put method for the form.
         :return: Response object or error message with status code.
         """
-        try:
-            updated_form = Form.query.get(form_id)
-        except DataError as err:
-            APP.logger.error(err.args)
-            return {'error': 'Invalid URL.'}, status.HTTP_404_NOT_FOUND
+        updated_form = Form.query.get(form_id)
         if not updated_form:
             return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
         try:
@@ -96,7 +84,6 @@ class FormResource(Resource):
             return err.messages, status.HTTP_400_BAD_REQUEST
 
         add_new_form = Form(**new_form)
-
         DB.session.add(add_new_form)
 
         try:
@@ -108,4 +95,4 @@ class FormResource(Resource):
         return Response(status=status.HTTP_201_CREATED)
 
 
-API.add_resource(FormResource, '/form/<form_id>', '/form')
+API.add_resource(FormResource, '/form/<int:form_id>', '/form')
