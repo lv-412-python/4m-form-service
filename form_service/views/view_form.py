@@ -36,9 +36,7 @@ class FormResource(Resource):
             except HTTPException as err:
                 APP.logger.error(err.args)
                 return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
-            output = Form.query.filter()
-            if 'owner' in ids:
-                output = output.filter(Form.owner.in_(ids['owner']))
+            output = Form.query.filter(Form.owner.in_(ids['owner']))
             result = FORMS_SCHEMA.dump(output).data
         resp = jsonify(result)
         resp.status_code = status.HTTP_200_OK
