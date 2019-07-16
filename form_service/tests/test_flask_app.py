@@ -37,7 +37,7 @@ class GetPutDeleteTest(TestCase):
         """Creates tables and puts objects into database."""
         DB.create_all()
         form1 = Form(title="Test", description="testing.", owner=2, fields="1, 4, 8, 9, 6")
-        form2 = Form(title="Another test", description="new one", owner=3, fields="4, 7, 8, 9, 1")
+        form2 = Form(title="Another test", description="new one", owner=2, fields="4, 7, 8, 9, 1")
         DB.session.add(form1)
         DB.session.add(form2)
         DB.session.commit()
@@ -46,7 +46,7 @@ class GetPutDeleteTest(TestCase):
         self.owner_id_1 = id1.owner
         self.forms_id_1 = id1.form_id
         id2 = Form.query.filter_by(title="Another test", description="new one",
-                                   owner=3, fields="4, 7, 8, 9, 1").first()
+                                   owner=2, fields="4, 7, 8, 9, 1").first()
         self.owner_id_2 = id2.owner
         self.forms_id_2 = id2.form_id
 
@@ -55,10 +55,10 @@ class GetPutDeleteTest(TestCase):
         DB.session.remove()
         DB.drop_all()
 
-    def test_get_all_forms(self):
+    def test_get_all_forms_by_one_owner(self):
         """Tests get method to get all forms."""
         with self.create_app().test_client() as client:
-            response = client.get('/form')
+            response = client.get('/form?owner=2')
             check = [{
                 "title": "Test",
                 "description": "testing.",
