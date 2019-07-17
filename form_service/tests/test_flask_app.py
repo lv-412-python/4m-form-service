@@ -55,7 +55,7 @@ class GetPutDeleteTest(TestCase):
         DB.drop_all()
 
     def test_get_all_forms_by_one_owner(self):
-        """Tests get method to get all forms."""
+        """Tests get method to get all forms by some owner."""
         with self.create_app().test_client() as client:
             response = client.get('/form?owner=2')
             check = [{
@@ -119,7 +119,7 @@ class GetPutDeleteTest(TestCase):
             self.assertEqual(response.status_code, 200)
 
     def test_delete_no_data(self):
-        """Tests delete method is the form with that id does not exist"""
+        """Tests delete method if the form with that id does not exist."""
         with self.create_app().test_client() as client:
             response = client.delete('/form/123')
             self.assertEqual(response.status_code, 400)

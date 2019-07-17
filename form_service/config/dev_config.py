@@ -1,4 +1,4 @@
-"""Configuration for development."""
+"""Configuration for development mode."""
 from form_service.config.base_config import Configuration
 
 

@@ -1,4 +1,4 @@
-"""Init users service"""
+"""Init Form service."""
 from flask import Flask
 from flask_marshmallow import Marshmallow
 from flask_restful import Api

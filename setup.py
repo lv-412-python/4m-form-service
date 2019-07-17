@@ -1,4 +1,4 @@
-""" app runner """
+"""APP runner."""
 from logging.config import fileConfig
 
 from form_service import APP  # pylint: disable=cyclic-import

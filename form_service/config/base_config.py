@@ -1,8 +1,8 @@
-"""Configuration for form service"""
+"""Configuration for form service."""
 
 
 class Configuration:
-    """Configuration class."""
+    """Base configuration class."""
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = \
         'postgres://kkxeulhg:bq35nWtkFTw4Ef04or0u74pspv54ntR2@balarama.db.elephantsql.com:5432/kkxeulhg'
