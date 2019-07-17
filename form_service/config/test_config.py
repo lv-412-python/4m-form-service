@@ -1,4 +1,4 @@
-"""Configuration for testing."""
+"""Configuration for testing mode."""
 from form_service.config.base_config import Configuration
 
 
