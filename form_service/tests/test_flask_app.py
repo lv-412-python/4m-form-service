@@ -62,14 +62,12 @@ class GetPutDeleteTest(TestCase):
                 "title": "Test",
                 "description": "testing.",
                 "owner": self.owner_id_1,
-                "form_id": self.forms_id_1,
-                "fields": [1, 4, 8, 9, 6]
+                "form_id": self.forms_id_1
             }, {
                 "title": "Another test",
                 "description": "new one",
                 "owner": self.owner_id_2,
-                "form_id": self.forms_id_2,
-                "fields": [4, 7, 8, 9, 1]
+                "form_id": self.forms_id_2
             }]
             self.assertEqual(response.json, check)
 

@@ -37,7 +37,7 @@ class FormResource(Resource):
         resp = jsonify(result)
         resp.status_code = status.HTTP_200_OK
 
-        return resp if result else ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
+        return resp if result else ({'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST)
 
     def delete(self, form_id):
         """
