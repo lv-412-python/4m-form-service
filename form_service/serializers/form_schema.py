@@ -27,5 +27,13 @@ class FormSchema(MA.Schema):
         return data
 
 
+class GeneralSchema(MA.Schema):
+    """Implementation of General schema."""
+    form_id = marshmallow.fields.Integer(dump_only=True)
+    title = marshmallow.fields.String()
+    description = marshmallow.fields.String()
+    owner = marshmallow.fields.Integer()
+
+
 FORM_SCHEMA = FormSchema(strict=True)
-FORMS_SCHEMA = FormSchema(many=True, strict=True)
+FORMS_SCHEMA = GeneralSchema(many=True, strict=True)
