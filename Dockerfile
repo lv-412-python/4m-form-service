@@ -9,6 +9,7 @@ RUN apt update -y && \
 COPY ./ ./opt/form-service-repo
 WORKDIR /opt/form-service-repo
 
+EXPOSE 5050
 RUN make install
 
 ENTRYPOINT ["python3"]

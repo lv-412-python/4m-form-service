@@ -37,7 +37,7 @@ class FormResource(Resource):
         resp = jsonify(result)
         resp.status_code = status.HTTP_200_OK
 
-        return resp if result else ({'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST)
+        return resp if result else ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
 
     def delete(self, form_id):
         """
@@ -47,7 +47,7 @@ class FormResource(Resource):
         form_to_delete = Form.query.get(form_id)
         if not form_to_delete:
             APP.logger.error('Form with id {} does not exist.'.format(form_id))
-            return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
+            return {'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND
 
         DB.session.delete(form_to_delete)
         DB.session.commit()
@@ -60,7 +60,7 @@ class FormResource(Resource):
         """
         updated_form = Form.query.get(form_id)
         if not updated_form:
-            return {'error': 'Does not exist.'}, status.HTTP_400_BAD_REQUEST
+            return {'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND
         try:
             updated_data = FORM_SCHEMA.load(request.json).data
         except ValidationError as err:
