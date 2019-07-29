@@ -120,7 +120,7 @@ class GetPutDeleteTest(TestCase):
         """Tests delete method if the form with that id does not exist."""
         with self.create_app().test_client() as client:
             response = client.delete('/form/123')
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.status_code, 404)
             self.assertEqual(response.json['error'], 'Does not exist.')
 
 

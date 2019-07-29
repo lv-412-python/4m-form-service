@@ -34,8 +34,9 @@ class FormResource(Resource):
                 return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
             output = Form.query.filter(Form.owner.in_(ids['owner']))
             result = FORMS_SCHEMA.dump(output).data
-        resp = jsonify(result)
-        resp.status_code = status.HTTP_200_OK
+        if result:
+            resp = jsonify(result)
+            resp.status_code = status.HTTP_200_OK
 
         return resp if result else ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
 
