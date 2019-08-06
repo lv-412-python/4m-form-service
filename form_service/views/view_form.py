@@ -24,15 +24,19 @@ class FormResource(Resource):
             output = Form.query.get(form_id)
             result = FORM_SCHEMA.dump(output).data
         else:
-            ids = {
-                'owner': fields.List(fields.Int(validate=lambda value: value > 0))
+            url_args = {
+                'owner': fields.List(fields.Int(validate=lambda value: value > 0)),
+                'form_id': fields.List(fields.Int(validate=lambda value: value > 0))
             }
             try:
-                ids = parser.parse(ids, request)
+                args = parser.parse(url_args, request)
             except HTTPException as err:
                 APP.logger.error(err.args)
                 return {'error': 'Invalid URL.'}, status.HTTP_400_BAD_REQUEST
-            output = Form.query.filter(Form.owner.in_(ids['owner']))
+            if 'owner' in args:
+                output = Form.query.filter(Form.owner.in_(args['owner']))
+            if 'form_id' in args:
+                output = Form.query.filter(Form.form_id.in_(args['form_id']))
             result = FORMS_SCHEMA.dump(output).data
         if result:
             resp = jsonify(result)
