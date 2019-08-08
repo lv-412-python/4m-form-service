@@ -9,6 +9,9 @@ This is the source code of the Form service which allows you create surveys with
 * Flask (1.0.3)
 * Docker (18.09.7)
 
+## ER diagram
+![alt_text](diagrams/4m_forms.png)
+
 ## Install
 For the next steps of service installation, you will need setup of Ubuntu 18.04 OS
 
