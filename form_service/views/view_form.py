@@ -13,8 +13,19 @@ from form_service.models.form import Form
 from form_service.serializers.form_schema import FORM_SCHEMA, FORMS_SCHEMA
 
 
+def check_authority(view):
+    """Decorator for resources."""
+    def func_wrapper(*args, **kwargs):
+        """Wrapper."""
+        if request.cookies['admin'] == 'False' and request.method != 'GET':
+            return {"error": "Forbidden."}, status.HTTP_403_FORBIDDEN
+        return view(*args, **kwargs)
+    return func_wrapper
+
+
 class FormResource(Resource):
     """Class FormView implementation."""
+    @check_authority
     def get(self, form_id=None):
         """
         Get method for Form Service.
@@ -44,6 +55,7 @@ class FormResource(Resource):
 
         return resp if result else ({'error': 'Does not exist.'}, status.HTTP_404_NOT_FOUND)
 
+    @check_authority
     def delete(self, form_id):
         """
         Delete method for the form.
@@ -58,6 +70,7 @@ class FormResource(Resource):
         DB.session.commit()
         return Response(status=status.HTTP_200_OK)
 
+    @check_authority
     def put(self, form_id):
         """
         Put method for the form.
@@ -77,6 +90,7 @@ class FormResource(Resource):
         DB.session.commit()
         return Response(status=status.HTTP_200_OK)
 
+    @check_authority
     def post(self):
         """
         Post method for creating a new form.
